@@ -1,12 +1,13 @@
 <script>
     import maplibregl from 'maplibre-gl';
-    import { onMount } from 'svelte';
+    import  { onMount } from 'svelte';
     import 'maplibre-gl/dist/maplibre-gl.css';
     import { getStopsFromXml } from './Stop.svelte';
 
     let map;
     let samara_point = new maplibregl.LngLat(50.22125, 53.2415);
     let stops = getStopsFromXml();
+    console.log(stops);
 
     let mapLanguage="ru";
     const bounds = [

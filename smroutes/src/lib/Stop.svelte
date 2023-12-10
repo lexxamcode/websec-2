@@ -1,5 +1,7 @@
 <script context="module">
     import {XMLHttpRequest} from "xhr2";
+    import * as cheerio from 'cheerio';
+    import * as convert from 'xml-js';
 
     export class SmroutesObject {
         constructor(id, title, coords) {
@@ -27,44 +29,41 @@
         var x = new XMLHttpRequest();
         x.open("GET", "https://tosamara.ru/api/v2/classifiers/stopsFullDB.xml", [false, null, null]);
         x.send();
-            
-        x.onload = function() {
-            console.log(`Загружено: ${x.status}`);
-            stopsXmlList = doc.getElementsByTagName('stops');
-        };
-
         let stops = [];
-        var doc = x.response;
+        x.onload = function() {
+            let jsonDocument = JSON.parse(convert.xml2json(x.response, {compact: true, spaces: 4}));
+            let jsonStops = jsonDocument['stops'];
+            
+            for (let i = 0; i < jsonStops.length; i++) {
+                let stop = jsonStops[i];
+                let id = stop["KS_ID"].text();
+                console.log(id);
+                let title = stop['title'].text();
+                let coords = [
+                    stop['latitude'].text(),
+                    stop['longitude'].text()
+                ]
+                let adjacentStreet = stop['adjacentStreet'].text()
+                let direction = stop['direction'].text();
 
-        for (let i = 0; i < stopsXmlList.length; i++) {
-            let stop = stopsXmlList[i];
+                let transport = {};
+                transport["busesMunicipal"] = stop['busesMunicipal'].text();
+                transport["busesCommercial"] = stop['busesCommercial'].text();
+                transport["busesPrigorod"] = stop['busesPrigorod'].text();
+                transport["busesSeason"] = stop['busesSeason'].text();
+                transport["busesSpectial"] = stop['busesSpecial'].text();
+                transport["busesIntercity"] = stop['busesIntercity'].text();
+                transport["trams"] = stop['trams'].text();
+                transport["trolleybuses"] = stop['trolleybuses'].text();
+                transport["metros"] = stop['metros'].text();
+                transport["electricTrains"] = stop['electricTrains'].text();
+                transport["riverTransports"] = stop['riverTransports'].text();
 
-            let id = stop.getElementsByTagName('KS_ID')[0].childNodes[0].nodeValue;
-            let title = stop.getElementsByTagName('title')[0].childNodes[0].nodeValue;
-            let coords = [
-                stop.getElementsByTagName('latitude')[0].childNodes[0].nodeValue,
-                stop.getElementsByTagName('longitude')[0].childNodes[0].nodeValue
-            ]
-            let adjacentStreet = stop.getElementsByTagName('adjacentStreet')[0].childNodes[0].nodeValue
-            let direction = stop.getElementsByTagName('direction')[0].childNodes[0].nodeValue;
+                stops.push(new Stop(id, title, coords, adjacentStreet, direction, transport));
+            }
 
-            let transport = {};
-            transport["busesMunicipal"] = stop.getElementsByTagName('busesMunicipal')[0].childNodes[0].nodeValue;
-            transport["busesCommercial"] = stop.getElementsByTagName('busesCommercial')[0].childNodes[0].nodeValue;
-            transport["busesPrigorod"] = stop.getElementsByTagName('busesPrigorod')[0].childNodes[0].nodeValue;
-            transport["busesSeason"] = stop.getElementsByTagName('busesSeason')[0].childNodes[0].nodeValue;
-            transport["busesSpectial"] = stop.getElementsByTagName('busesSpecial')[0].childNodes[0].nodeValue;
-            transport["busesIntercity"] = stop.getElementsByTagName('busesIntercity')[0].childNodes[0].nodeValue;
-            transport["trams"] = stop.getElementsByTagName('trams')[0].childNodes[0].nodeValue;
-            transport["trolleybuses"] = stop.getElementsByTagName('trolleybuses')[0].childNodes[0].nodeValue;
-            transport["metros"] = stop.getElementsByTagName('metros')[0].childNodes[0].nodeValue;
-            transport["electricTrains"] = stop.getElementsByTagName('electricTrains')[0].childNodes[0].nodeValue;
-            transport["riverTransports"] = stop.getElementsByTagName('riverTransport')[0].childNodes[0].nodeValue;
-
-            stops.append(new Stop(id, title, coords, adjacentStreet, direction, transport));
-        }
-
-        return stops;
+            return stops;
+        };
     };
 
     export function makeStopsLayer(stops) {
