@@ -7,16 +7,34 @@
         SideNavLink,
         SkipToContent,
         Content,
-        Button,
         ExpandableTile,
-        Search,
-        HeaderUtilities,
-        HeaderAction
+        Button,
+        ClickableTile
+
     } from "carbon-components-svelte";
-    import Favorite from "carbon-icons-svelte/lib/Favorite.svelte";
+    import { onMount } from 'svelte';
     import Map from '../lib/Map.svelte';
     let isSideNavOpen = false;
+    let mapComponent;
+    let findFavoriteStop;
+    let currentTransport;
     let expandableTileExpanded = false;
+
+    let savedStop = []
+    onMount(() => {
+        if (localStorage.getItem('savedStop'))  {
+            savedStop = JSON.parse(localStorage.getItem('savedStop'));
+        }
+        else 
+            console.log('not found local storaged stops');
+
+        console.log(savedStop);
+
+        findFavoriteStop = function(coords){
+			mapComponent.findStop(coords)
+		}
+    })
+    
 </script>
 
 <main class="d-flex">
@@ -24,21 +42,21 @@
         <svelte:fragment slot="skip-to-content">
           <SkipToContent />
         </svelte:fragment>
-        <HeaderUtilities>
-            <Button icon={Favorite} iconDescription="Избранные остановки" tooltipPosition="left"/>
-          </HeaderUtilities>
     </Header>
     
     <SideNav bind:isOpen={isSideNavOpen}>
         <SideNavItems>
-            <SideNavLink>
-                <Search>
-
-                </Search>
-            </SideNavLink>
+            {#each savedStop as favoriteStop}
+                <SideNavLink>
+                    <ClickableTile on:click={findFavoriteStop(favoriteStop.geometry.coordinates)}>
+                        <div>{favoriteStop.properties.title}</div>
+                        <div>{favoriteStop.properties.direction}</div>
+                    </ClickableTile>
+                </SideNavLink>
+            {/each}
         </SideNavItems>
     </SideNav>
     <Content>
-        <Map/>
+        <Map bind:this={mapComponent}/>
     </Content>
 </main>

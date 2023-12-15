@@ -29,15 +29,12 @@
 
     });
 
-    export async function findStop(title) {
-        for (let i = 0; i < stops.features.length; i++) {
-            if (title === stops.features[i].properties.title) {
-                map.flyTo({
-                    center: stops.features[i].geometry.coordinates,
-                    essential: true
-                });
-            }
-        }
+    export async function findStop(coords) {
+        map.flyTo({
+            center: coords,
+            zoom: 20,
+            essential: true
+        });
     }
 </script>
 

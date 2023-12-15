@@ -1,7 +1,16 @@
 import * as convert from 'xml-js';
 import sha1 from 'js-sha1';
 
+let savedStop = []
+
 export async function getStopsFromXml(map) {
+    
+    if (localStorage.getItem('savedStop'))  {
+        savedStop = JSON.parse(localStorage.getItem('savedStop'));
+    }
+    else 
+        console.log('not found local storaged stops');
+
     const response = await fetch('https://tosamara.ru/api/v2/classifiers/stopsFullDB.xml');
     const responseText = await response.text();
 
@@ -45,6 +54,9 @@ export async function getStopsFromXml(map) {
         const featureProperties = feature.properties;
         const popupContent = 
         `
+            <div>
+                <button id='favorite'>В избранное</button>
+            </div>
             <p>${featureProperties.title}</p>
             <p>Направление:</p>
             <h>${featureProperties.direction}</h>
@@ -80,12 +92,28 @@ export async function getStopsFromXml(map) {
 
             let arrivalContent = ``;
             for (let i = 0; i < arrivals.length; i++) {
-                var arrivalDiv = document.createElement('div');
                 arrivalContent += `${arrivals[i].type} номер ${arrivals[i].number} будет через ${Math.trunc(arrivals[i].time / 60)} ч. ${arrivals[i].time % 60} м.\n`
             }
 
 
             document.getElementById('arrival').value = arrivalContent;
+        });
+
+        const favoriteButton = document.getElementById('favorite');
+        favoriteButton.addEventListener('click', () => {
+            if (savedStop.find(find_stop => find_stop.properties.id === feature.properties.id) === undefined) {
+                console.log('не нашел');
+                console.log(savedStop);
+                savedStop.push(feature);
+                localStorage.setItem("savedStop", JSON.stringify(savedStop));
+                favoriteButton.firstChild.data  = 'В избранном';
+            }
+            else {
+                let index = savedStop.indexOf(find_stop => find_stop.properties.id === feature.properties.id);
+                savedStop.splice(index, 1);
+                localStorage.setItem("savedStop", JSON.stringify(savedStop));
+                favoriteButton.firstChild.data  = 'В избранное';
+            }
         });
 
         const tansportSelectElement = document.getElementById("transport");
@@ -108,9 +136,4 @@ export async function getStopsFromXml(map) {
 
     };
     return stops, markers;
-}
-
-export async function arrivalsForStop(id) {
-   
-    return JSON.parse(responseText);
 }
