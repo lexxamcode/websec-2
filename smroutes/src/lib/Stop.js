@@ -100,15 +100,21 @@ export async function getStopsFromXml(map) {
         });
 
         const favoriteButton = document.getElementById('favorite');
+        if (savedStop.find(find_stop => find_stop.properties.id === feature.properties.id) != undefined) { 
+            favoriteButton.firstChild.data  = 'В избранном';
+        }
+        else {
+            favoriteButton.firstChild.data  = 'В избранное';
+        }
         favoriteButton.addEventListener('click', () => {
             if (savedStop.find(find_stop => find_stop.properties.id === feature.properties.id) === undefined) {
-                console.log('не нашел');
-                console.log(savedStop);
+                console.log('добавлено в избранное');
                 savedStop.push(feature);
                 localStorage.setItem("savedStop", JSON.stringify(savedStop));
                 favoriteButton.firstChild.data  = 'В избранном';
             }
             else {
+                console.log('удалено из избранного');
                 let index = savedStop.indexOf(find_stop => find_stop.properties.id === feature.properties.id);
                 savedStop.splice(index, 1);
                 localStorage.setItem("savedStop", JSON.stringify(savedStop));
